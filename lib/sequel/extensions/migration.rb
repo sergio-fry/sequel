@@ -534,8 +534,6 @@ module Sequel
 
       @opts = opts
       @initial_current = current
-
-      check_missing
     end
 
     def check_missing
@@ -583,6 +581,8 @@ module Sequel
     
     # Apply all migrations on the database
     def run
+      check_missing
+
       migrations.zip(version_numbers).each do |m, v|
         timer = Sequel.start_timer
         db.log_info("Begin applying migration version #{v}, direction: #{direction}")
