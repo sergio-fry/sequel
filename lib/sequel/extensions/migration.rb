@@ -531,10 +531,6 @@ module Sequel
     # The direction of the migrator, either :up or :down
     attr_reader :direction
 
-    # The migrations used by this migrator
-    attr_reader :migrations
-
-
     # Set up all state for the migrator instance
     def initialize(db, directory, opts=OPTS)
       super
@@ -548,8 +544,6 @@ module Sequel
       if @direction == :down && @current >= @files.length && !@allow_missing_migration_files
         raise Migrator::Error, "Missing migration version(s) needed to migrate down to target version (current: #{current}, target: #{target})"
       end
-
-      @migrations = get_migrations
     end
 
     def target
@@ -628,8 +622,8 @@ module Sequel
     
     # Returns a list of migration classes filtered for the migration range and
     # ordered according to the migration direction.
-    def get_migrations
-      version_numbers.map{|n| load_migration_file(files[n])}
+    def migrations
+      @migrations ||= version_numbers.map{|n| load_migration_file(files[n])}
     end
     
     # Returns the latest version available in the specified directory.
