@@ -535,6 +535,10 @@ module Sequel
       @opts = opts
       @initial_current = current
 
+      check_missing
+    end
+
+    def check_missing
       if direction == :down && current >= @files.length && !@allow_missing_migration_files
         raise Migrator::Error, "Missing migration version(s) needed to migrate down to target version (current: #{current}, target: #{target})"
       end
