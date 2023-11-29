@@ -534,27 +534,14 @@ module Sequel
     # The migrations used by this migrator
     attr_reader :migrations
 
+
     # Set up all state for the migrator instance
     def initialize(db, directory, opts=OPTS)
       super
       @current = opts[:current] || current_migration_version
 
-      latest_version = latest_migration_version
-      @target = if opts[:target]
-        opts[:target]
-      elsif opts[:relative]
-        @current + opts[:relative]
-      else
-        latest_version
-      end
-
-      raise(Error, "No target and/or latest version available, probably because no migration files found or filenames don't follow the migration filename convention") unless target && latest_version
-
-      if @target > latest_version
-        @target = latest_version
-      elsif @target < 0
-        @target = 0
-      end
+      @target_option = opts[:target]
+      @relaive_option = opts[:relative]
 
       @direction = current < target ? :up : :down
 
@@ -563,6 +550,26 @@ module Sequel
       end
 
       @migrations = get_migrations
+    end
+
+    def target
+      @target = if @target_option
+        @target_option
+      elsif @relaive_option
+        @current + @relaive_option
+      else
+        latest_migration_version
+      end
+
+      raise(Error, "No target and/or latest version available, probably because no migration files found or filenames don't follow the migration filename convention") unless @target && latest_migration_version
+
+      if @target > latest_migration_version
+        @target = latest_migration_version
+      elsif @target < 0
+        @target = 0
+      end
+
+      @target
     end
 
     # The integer migrator is current if the current version is the same as the target version.
@@ -626,6 +633,7 @@ module Sequel
     end
     
     # Returns the latest version available in the specified directory.
+    # TODO: memoize
     def latest_migration_version
       l = files.last
       l ? migration_version_from_file(File.basename(l)) : nil
