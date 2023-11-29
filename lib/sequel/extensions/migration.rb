@@ -525,20 +525,24 @@ module Sequel
   class IntegerMigrator < Migrator
     Error = Migrator::Error
 
+    # The current version for this migrator
+    attr_reader :initial_current
+
     # Set up all state for the migrator instance
     def initialize(db, directory, opts=OPTS)
       super
 
       @opts = opts
+      @initial_current = current
 
-      if @direction == :down && @current >= @files.length && !@allow_missing_migration_files
+      if direction == :down && current >= @files.length && !@allow_missing_migration_files
         raise Migrator::Error, "Missing migration version(s) needed to migrate down to target version (current: #{current}, target: #{target})"
       end
     end
 
     # The direction of the migrator, either :up or :down
     def direction
-      current < target ? :up : :down
+      initial_current < target ? :up : :down
     end
 
     # The current version for this migrator
@@ -552,7 +556,7 @@ module Sequel
       @target = if @opts[:target]
         @opts[:target]
       elsif @opts[:relative]
-        @current + @opts[:relative]
+        current + @opts[:relative]
       else
         latest_migration_version
       end
@@ -667,7 +671,7 @@ module Sequel
         versions = files.
           compact.
           map{|f| migration_version_from_file(File.basename(f))}.
-          select{|v| up? ? (v > current && v <= target) : (v <= current && v > target)}.
+          select{|v| up? ? (v > initial_current && v <= target) : (v <= initial_current && v > target)}.
           sort
         versions.reverse! unless up?
         versions
